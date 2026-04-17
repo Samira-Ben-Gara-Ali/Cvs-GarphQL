@@ -29,7 +29,7 @@ export const Mutation = {
         db.cvs.push(newCv);
 
         // on publie l evenement dans le canal et le payload ici = cv
-        pubSub.publish("new_cv", { cv: newCv });
+        pubSub.publish("cv", { cv: newCv, mutation:"ADD" });
         return newCv;
     },
 
@@ -55,7 +55,7 @@ export const Mutation = {
             cv[key] = input[key];
         }
 
-        pubSub.publish("update_cv", { cv });
+        pubSub.publish("cv", {  cv, mutation:"UPDATE" });
 
         return cv;
     },
@@ -72,7 +72,7 @@ export const Mutation = {
         // on veut supprimer un elt a partir de la position index
         db.cvs.splice(index, 1);
 
-        pubSub.publish("delete_cv", { cv: deletedCv });
+        pubSub.publish("cv", { cv: deletedCv, mutation:"DELETE"});
         return deletedCv;
     }
 };

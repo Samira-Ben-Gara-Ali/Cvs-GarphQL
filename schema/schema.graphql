@@ -54,7 +54,15 @@ type Mutation {
     deleteCv(id: ID!): Cv
 }
 type Subscription {
-    newCv: Cv
-    updatedCv: Cv
-    deletedCv: Cv
+    cv: CvSubscriptionPayload
+}
+enum MutationOperationType{
+    UPDATE
+    DELETE
+    ADD
+}
+#le payload retounee ici est cv et l action faite
+type CvSubscriptionPayload{
+    cv: Cv!
+    mutation: MutationOperationType!
 }
