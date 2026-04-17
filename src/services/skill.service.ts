@@ -1,18 +1,34 @@
-import {GenericService} from "./generic/generic.service";
-import {Skill} from "../entities/skill.entity";
-import {Repository} from "typeorm";
+import { prisma } from "../prisma.client";
+import { GraphQLError } from "graphql";
 
-export class SkillService extends GenericService<Skill> {
-    constructor(
-        skillRepository: Repository<Skill>
-    ) {
-        super(skillRepository);
+export class SkillService {
+    findAll() {
+        return prisma.skill.findMany();
     }
 
-    async findByCvId(cvId: number): Promise<Skill[]> {
-        return this.repository
-            .createQueryBuilder("skill")
-            .innerJoin("skill.cvs", "cv", "cv.id = :cvId", { cvId })
-            .getMany();
+    async findOne(id: number) {
+        const skill = await prisma.skill.findUnique({ where: { id } });
+        if (!skill) throw new GraphQLError("Skill not found");
+        return skill;
+    }
+
+    add(input: { designation: string }) {
+        return prisma.skill.create({ data: input });
+    }
+
+    async update(id: number, input: Partial<{ designation: string }>) {
+        await this.findOne(id);
+        return prisma.skill.update({ where: { id }, data: input });
+    }
+
+    async delete(id: number) {
+        await this.findOne(id);
+        return prisma.skill.delete({ where: { id } });
+    }
+
+    findByCvId(cvId: number) {
+        return prisma.skill.findMany({
+            where: { cvs: { some: { id: cvId } } },
+        });
     }
 }

@@ -1,24 +1,34 @@
-import {GenericService} from "./generic/generic.service";
-import {Role} from "../entities/role.entity";
-import {Repository} from "typeorm";
+import { prisma } from "../prisma.client";
+import { GraphQLError } from "graphql";
 
-export class RoleService extends GenericService<Role> {
-    constructor(
-        roleRepository: Repository<Role>
-    ) {
-        super(roleRepository);
+export class RoleService {
+    findAll() {
+        return prisma.role.findMany();
     }
 
-    async findAllWithUsers(): Promise<Role[]> {
-        return this.repository.find({
-            relations: ['users'],
+    async findOne(id: number) {
+        const role = await prisma.role.findUnique({ where: { id } });
+        if (!role) throw new GraphQLError("Role not found");
+        return role;
+    }
+
+    add(input: { name: string }) {
+        return prisma.role.create({ data: input });
+    }
+
+    async update(id: number, input: Partial<{ name: string }>) {
+        await this.findOne(id);
+        return prisma.role.update({ where: { id }, data: input });
+    }
+
+    async delete(id: number) {
+        await this.findOne(id);
+        return prisma.role.delete({ where: { id } });
+    }
+
+    findByUserId(userId: number) {
+        return prisma.role.findMany({
+            where: { users: { some: { id: userId } } },
         });
-    }
-
-    async findByUserId(userId: string): Promise<Role[]> {
-        return await this.repository
-            .createQueryBuilder("role")
-            .innerJoin("role.users", "user", "user.id = :userId", { userId })
-            .getMany();
     }
 }

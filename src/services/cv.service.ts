@@ -1,49 +1,70 @@
-import {GenericService} from "./generic/generic.service";
-import {Cv} from "../entities/cv.entity";
-import {User} from "../entities/user.entity";
-import {Skill} from "../entities/skill.entity";
-import {Repository} from "typeorm";
-import {GraphQLError} from "graphql";
+import { prisma } from "../prisma.client";
+import { GraphQLError } from "graphql";
 
-export class CvService extends GenericService<Cv> {
-    constructor(
-        cvRepository: Repository<Cv>
-    ) {
-        super(cvRepository);
+export class CvService {
+    findAll() {
+        return prisma.cv.findMany();
     }
 
-    async findByUserId(userId: number): Promise<Cv[]> {
-        return await this.repository
-            .createQueryBuilder("cv")
-            .where("cv.user.id = :userId", { userId })
-            .getMany();
+    async findOne(id: number) {
+        const cv = await prisma.cv.findUnique({ where: { id } });
+        if (!cv) throw new GraphQLError("CV not found");
+        return cv;
     }
 
-    async findBySkillId(skillId: number): Promise<Cv[]> {
-        return this.repository
-            .createQueryBuilder("cv")
-            .innerJoin("cv.skills", "skill", "skill.id = :skillId", { skillId })
-            .getMany();
-    }
-
-    // cv.service.ts
-    async findOneWithRelations(id: number): Promise<Cv> {
-        const cv = await this.repository.findOne({
+    async findOneWithRelations(id: number) {
+        const cv = await prisma.cv.findUnique({
             where: { id },
-            relations: ["user", "skills"],
+            include: { user: true, skills: true },
         });
         if (!cv) throw new GraphQLError("CV not found");
         return cv;
     }
 
-    async updateCv(id: number, fields: Partial<Cv>, user: User, skills: Skill[]): Promise<Cv> {
-        const existing = await this.findOneWithRelations(id);
-        const updated = this.repository.create({
-            ...existing,
-            ...fields,
-            user,
-            skills,
+    add(input: {
+        name: string; firstname: string; age: number;
+        cin: number; job: string; path?: string;
+        userId: number; skillIds: number[];
+    }) {
+        const { skillIds, ...fields } = input;
+        return prisma.cv.create({
+            data: {
+                ...fields,
+                skills: { connect: skillIds.map(id => ({ id })) },
+            },
         });
-        return await this.repository.save(updated);
+    }
+
+    async update(id: number, input: {
+        name?: string; firstname?: string; age?: number;
+        cin?: number; job?: string; path?: string;
+        userId?: number; skillIds?: number[];
+    }) {
+        await this.findOne(id);
+        const { skillIds, ...fields } = input;
+        return prisma.cv.update({
+            where: { id },
+            data: {
+                ...fields,
+                ...(skillIds && {
+                    skills: { set: skillIds.map(id => ({ id })) },
+                }),
+            },
+        });
+    }
+
+    async delete(id: number) {
+        await this.findOne(id);
+        return prisma.cv.delete({ where: { id } });
+    }
+
+    findByUserId(userId: number) {
+        return prisma.cv.findMany({ where: { userId } });
+    }
+
+    findBySkillId(skillId: number) {
+        return prisma.cv.findMany({
+            where: { skills: { some: { id: skillId } } },
+        });
     }
 }
