@@ -1,10 +1,12 @@
 type Query{
-    users: [User]
-    cvs: [Cv]
-    skills: [Skill]
+    users: [User]!
+    cvs: [Cv]!
+    skills: [Skill]!
     user(id: ID!): User
     cv(id: ID!): Cv
     skill(id: ID!): Skill
+    roles: [Role]!
+    role(id: ID!): Role
 }
 
 type Cv{
@@ -21,40 +23,89 @@ type Skill{
     designation: String!
     cvs: [Cv]!
 }
+
 type User{
     id: ID!
-    name: String!
+    username: String!
     email: String
-    role: Role!
+    roles:[Role]!
     cvs: [Cv]!
 }
 
-enum Role {
-    USER
-    ADMIN
+type Role {
+    id: ID!
+    name: String!
+    users: [User]!
 }
+
+# --- Input types ---
+
+input AddUserInput {
+    username: String!
+    email: String!
+    password: String!
+}
+
+input UpdateUserInput {
+    id: ID!
+    username: String
+    email: String
+    password: String
+}
+
+input AddRoleInput {
+    name: String!
+}
+
+input UpdateRoleInput {
+    id: ID!
+    name: String
+}
+
+input AddSkillInput {
+    designation: String!
+}
+
+input UpdateSkillInput {
+    id: ID!
+    designation: String
+}
+
 input AddCvInput {
     name: String!
-    age: Int
-    job: String
-    userId: ID!
-    skillIds: [ID!]!
+    firstname: String!
+    age: Int!
+    cin: Int!
+    job: String!
+    path: String
 }
-#ici on cree un autre input car les champs ne sont pas necessairement obligatoires
+
 input UpdateCvInput {
+    id: ID!
     name: String
+    firstname: String
     age: Int
+    cin: Int
     job: String
-    userId: ID
-    skillIds: [ID!]
+    path: String
 }
+
+# --- Mutation type ---
+
 type Mutation {
-    addCv(input: AddCvInput!): Cv
-    updateCv(id: ID!, input: UpdateCvInput!): Cv
-    deleteCv(id: ID!): Cv
-}
-type Subscription {
-    newCv: Cv
-    updatedCv: Cv
-    deletedCv: Cv
+    addUser(input: AddUserInput!): User!
+    updateUser(input: UpdateUserInput!): User!
+    deleteUser(id: ID!): User!
+
+    addRole(input: AddRoleInput!): Role!
+    updateRole(input: UpdateRoleInput!): Role!
+    deleteRole(id: ID!): Role!
+
+    addSkill(input: AddSkillInput!): Skill!
+    updateSkill(input: UpdateSkillInput!): Skill!
+    deleteSkill(id: ID!): Skill!
+
+    addCv(input: AddCvInput!): Cv!
+    updateCv(input: UpdateCvInput!): Cv!
+    deleteCv(id: ID!): Cv!
 }
