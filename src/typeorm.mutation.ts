@@ -1,5 +1,5 @@
 import { AppContainer } from "./app.container";
-import { pubSub } from "./main";
+import { pubSub } from "./pubSub";
 import {GraphQLError} from "graphql";
 
 export const Mutation = {
