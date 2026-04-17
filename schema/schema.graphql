@@ -1,0 +1,60 @@
+type Query{
+    users: [User]
+    cvs: [Cv]
+    skills: [Skill]
+    user(id: ID!): User
+    cv(id: ID!): Cv
+    skill(id: ID!): Skill
+}
+
+type Cv{
+    id: ID!
+    name: String!
+    age: Int
+    job: String
+    user: User!
+    skills: [Skill]!
+}
+
+type Skill{
+    id: ID!
+    designation: String!
+    cvs: [Cv]!
+}
+type User{
+    id: ID!
+    name: String!
+    email: String
+    role: Role!
+    cvs: [Cv]!
+}
+
+enum Role {
+    USER
+    ADMIN
+}
+input AddCvInput {
+    name: String!
+    age: Int
+    job: String
+    userId: ID!
+    skillIds: [ID!]!
+}
+#ici on cree un autre input car les champs ne sont pas necessairement obligatoires
+input UpdateCvInput {
+    name: String
+    age: Int
+    job: String
+    userId: ID
+    skillIds: [ID!]
+}
+type Mutation {
+    addCv(input: AddCvInput!): Cv
+    updateCv(id: ID!, input: UpdateCvInput!): Cv
+    deleteCv(id: ID!): Cv
+}
+type Subscription {
+    newCv: Cv
+    updatedCv: Cv
+    deletedCv: Cv
+}
