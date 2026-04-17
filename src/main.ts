@@ -13,6 +13,7 @@ import {Mutation} from "./typeorm.mutation";
 import {User} from "./typeorm.user";
 import {Role} from "./typeorm.role";
 import {Cv} from "./typeorm.cv";
+import {Skill} from "./typeorm.skill";
 
 const fs = require("fs");
 const path = require("path");
@@ -26,7 +27,8 @@ export const schema = createSchema({
         Mutation,
         User,
         Role,
-        Cv
+        Cv,
+        Skill,
     },
 });
 

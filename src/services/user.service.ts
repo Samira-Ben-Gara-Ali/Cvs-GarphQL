@@ -22,7 +22,10 @@ export class UserService extends GenericService<User> {
             .getMany();
     }
 
-    async findByCvId() {
-        return await this.repository.find({})
+    async findByCvId(cvId: number): Promise<User | null> {
+        return await this.repository
+            .createQueryBuilder("user")
+            .innerJoin("user.cvs", "cv", "cv.id = :cvId", { cvId })
+            .getOne();
     }
 }

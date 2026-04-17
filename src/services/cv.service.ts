@@ -16,11 +16,10 @@ export class CvService extends GenericService<Cv> {
             .getMany();
     }
 
-    async findUser(id: number) {
-        return await this.repository
+    async findBySkillId(skillId: number): Promise<Cv[]> {
+        return this.repository
             .createQueryBuilder("cv")
-            .where("cv.user.id = :userId", { id })
-            .select("cv.user")
-            .getOne();
+            .innerJoin("cv.skills", "skill", "skill.id = :skillId", { skillId })
+            .getMany();
     }
 }

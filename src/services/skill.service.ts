@@ -8,4 +8,11 @@ export class SkillService extends GenericService<Skill> {
     ) {
         super(skillRepository);
     }
+
+    async findByCvId(cvId: number): Promise<Skill[]> {
+        return this.repository
+            .createQueryBuilder("skill")
+            .innerJoin("skill.cvs", "cv", "cv.id = :cvId", { cvId })
+            .getMany();
+    }
 }
