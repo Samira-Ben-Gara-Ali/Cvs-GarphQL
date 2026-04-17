@@ -19,7 +19,7 @@ export class Cv extends TimeStampEntity {
     @Column()
     age: number;
     @Column({
-        unique: true,
+        unique: false,
     })
     cin: number;
     @Column()

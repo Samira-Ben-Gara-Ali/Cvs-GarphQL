@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { createServer } from "node:http";
-import {createYoga, renderGraphiQL} from "graphql-yoga";
+import {createPubSub, createYoga, renderGraphiQL} from "graphql-yoga";
 import { createSchema } from "graphql-yoga";
 import {Query} from "./typeorm.query";
 import { DB } from "./db/db";
@@ -17,6 +17,7 @@ import {Skill} from "./typeorm.skill";
 
 const fs = require("fs");
 const path = require("path");
+export const pubSub = createPubSub();
 export const schema = createSchema({
     typeDefs: fs.readFileSync(
         path.join(__dirname, "./../schema/schema.graphql"),

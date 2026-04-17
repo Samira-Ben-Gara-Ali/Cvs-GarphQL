@@ -16,10 +16,6 @@ export class GenericService<T extends TimeStampEntity & { id: number }> {
             where: { id } as any,
         });
 
-        if (!entity) {
-            throw new GraphQLError('entity does not exist');
-        }
-
         return entity;
     }
 
@@ -27,7 +23,7 @@ export class GenericService<T extends TimeStampEntity & { id: number }> {
         return await this.repository.save(entity);
     }
 
-    async delete(id: string): Promise<T> {
+    async delete(id: number): Promise<T> {
         const entity = await this.repository.findOne({
             where: { id } as any,
         });
