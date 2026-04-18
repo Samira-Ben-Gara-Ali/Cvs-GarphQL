@@ -1,9 +1,9 @@
 import { GraphQLError } from "graphql";
-import {pubSub} from "./main";
+import {prisma, pubSub} from "./main";
 
 export const Mutation = {
 
-    addCv: async (_, { input }, { prisma }) => {
+    addCv: async (_, { input }, {  }) => {
 
         const user = await prisma.user.findUnique({
             where: { id: Number(input.userId) }
@@ -49,7 +49,7 @@ export const Mutation = {
         return newCv;
     },
 
-    updateCv: async (_, { id, input }, { prisma }) => {
+    updateCv: async (_, { id, input }, {  }) => {
 
         const existingCv = await prisma.cv.findUnique({
             where: { id: Number(id) }
@@ -112,7 +112,7 @@ export const Mutation = {
         return updatedCv;
     },
 
-    deleteCv: async (_, { id }, { prisma }) => {
+    deleteCv: async (_, { id }, {  }) => {
 
         const existingCv = await prisma.cv.findUnique({
             where: { id: Number(id) },

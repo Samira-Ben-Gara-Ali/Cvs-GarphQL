@@ -5,7 +5,7 @@ import {Query} from "./Query";
 import {Mutation} from "./Mutation";
 import {Subscription} from "./Subscription";
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 const fs = require("fs");
 const path = require("path");
 
@@ -24,7 +24,7 @@ export const schema = createSchema({
     },
 });
 
-const yoga = createYoga({ schema, context: { prisma }, renderGraphiQL });
+const yoga = createYoga({ schema, context: {  }, renderGraphiQL });
 const server = createServer(yoga);
 server.listen(4000, () => {
     console.info(`

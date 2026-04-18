@@ -1,4 +1,5 @@
 import { GraphQLError } from "graphql";
+import {prisma} from "./main";
 
 const findByIdOrThrow = async (model, id, entityName, include = {}) => {
     const item = await model.findUnique({
@@ -19,7 +20,7 @@ const findByIdOrThrow = async (model, id, entityName, include = {}) => {
 
 export const Query = {
 
-    users: async (_, __, { prisma }) =>
+    users: async (_, __, {  }) =>
         prisma.user.findMany({
             include: {
                 cvs: {
@@ -30,7 +31,7 @@ export const Query = {
             }
         }),
 
-    user: async (_, { id }, { prisma }) =>
+    user: async (_, { id }, {  }) =>
         findByIdOrThrow(prisma.user, id, "User", {
             cvs: {
                 include: {
@@ -39,7 +40,7 @@ export const Query = {
             }
         }),
 
-    cvs: async (_, __, { prisma }) =>
+    cvs: async (_, __, {  }) =>
         prisma.cv.findMany({
             include: {
                 user: true,
@@ -47,20 +48,20 @@ export const Query = {
             }
         }),
 
-    cv: async (_, { id }, { prisma }) =>
+    cv: async (_, { id }, {  }) =>
         findByIdOrThrow(prisma.cv, id, "Cv", {
             user: true,
             skills: true
         }),
 
-    skills: async (_, __, { prisma }) =>
+    skills: async (_, __, {  }) =>
         prisma.skill.findMany({
             include: {
                 cvs: true
             }
         }),
 
-    skill: async (_, { id }, { prisma }) =>
+    skill: async (_, { id }, {  }) =>
         findByIdOrThrow(prisma.skill, id, "Skill", {
             cvs: true
         }),
