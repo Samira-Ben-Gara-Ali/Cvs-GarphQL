@@ -12,16 +12,6 @@ export const Query = {
 
         return user;
     },
-    roles: () => AppContainer.roleService.findAll(),
-    role: (parent, { id }, ctx, info) => {
-        const role = AppContainer.roleService.findOne(id);
-
-        if (!role) {
-            throw new GraphQLError("Role not found");
-        }
-
-        return role;
-    },
     skills: () => AppContainer.skillService.findAll(),
     skill: (parent, { id }, ctx, info) => {
         const skill = AppContainer.skillService.findOne(id);

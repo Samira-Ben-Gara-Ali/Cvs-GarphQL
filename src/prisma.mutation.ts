@@ -15,18 +15,6 @@ export const Mutation = {
         return AppContainer.userService.delete(Number(id));
     },
 
-    // --- Role ---
-    addRole: async (_parent, { input }) => {
-        return AppContainer.roleService.add(input);
-    },
-    updateRole: async (_parent, { input }) => {
-        const { id, ...fields } = input;
-        return AppContainer.roleService.update(Number(id), fields); // ← same fix
-    },
-    deleteRole: async (_parent, { id }) => {
-        return AppContainer.roleService.delete(Number(id));
-    },
-
     // --- Skill ---
     addSkill: async (_parent, { input }) => {
         return AppContainer.skillService.add(input);

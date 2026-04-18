@@ -28,14 +28,13 @@ type User{
     id: ID!
     username: String!
     email: String
-    roles:[Role]!
+    role:Role!
     cvs: [Cv]!
 }
 
-type Role {
-    id: ID!
-    name: String!
-    users: [User]!
+enum Role {
+    USER
+    ADMIN
 }
 
 # --- Input types ---

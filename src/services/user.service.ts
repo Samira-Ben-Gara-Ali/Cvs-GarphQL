@@ -1,5 +1,6 @@
 import { prisma } from "../prisma.client";
 import { GraphQLError } from "graphql";
+import { Role } from "@prisma/client";
 
 export class UserService {
     findAll() {
@@ -12,11 +13,16 @@ export class UserService {
         return user;
     }
 
-    add(input: { username: string; email: string; password: string }) {
-        return prisma.user.create({ data: input });
+    add(input: { username: string; email: string; password: string; role?: Role }) {
+        return prisma.user.create({
+            data: {
+                ...input,
+                role: input.role ?? Role.USER, // ← default to USER
+            }
+        });
     }
 
-    async update(id: number, input: Partial<{ username: string; email: string; password: string }>) {
+    async update(id: number, input: Partial<{ username: string; email: string; password: string; role: Role }>) {
         await this.findOne(id);
         return prisma.user.update({ where: { id }, data: input });
     }
@@ -24,12 +30,6 @@ export class UserService {
     async delete(id: number) {
         await this.findOne(id);
         return prisma.user.delete({ where: { id } });
-    }
-
-    findByRoleId(roleId: number) {
-        return prisma.user.findMany({
-            where: { roles: { some: { id: roleId } } },
-        });
     }
 
     findByCvId(cvId: number) {
