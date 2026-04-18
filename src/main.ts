@@ -17,7 +17,6 @@ export const schema = createSchema({
     ),
     resolvers: {
         Query,
-
         Mutation,
         Subscription,
 

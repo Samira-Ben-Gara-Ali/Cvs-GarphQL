@@ -5,23 +5,20 @@ export const Mutation = {
 
     addCv: async (_, { input }, {  }) => {
 
-        const user = await prisma.user.findUnique({
-            where: { id: Number(input.userId) }
-        });
-
-        if (!user) {
-            throw new GraphQLError("user inexistant !");
-        }
-
-        const skills = await prisma.skill.findMany({
-            where: {
-                id: { in: input.skillIds.map(id => Number(id)) }
-            }
-        });
-
-        if (skills.length !== input.skillIds.length) {
-            throw new GraphQLError("skills invalides !");
-        }
+        // on verifie que l user associee au cv existe vraiment dans la bd
+        await validateExistPrisma(
+            prisma.user,
+            "id",
+            Number(input.userId),
+            "user inexistant !"
+        );
+        // on verifie que les skills existent en bd
+        await validateExistPrisma(
+            prisma.skill,
+            "id",
+            input.skillIds.map(id => Number(id)),
+            "skills invalides !"
+        );
 
         const newCv = await prisma.cv.create({
             data: {
@@ -29,12 +26,15 @@ export const Mutation = {
                 age: input.age,
                 job: input.job,
                 user: {
+                    // ici on va lier le cv a l user indiquee via foreign key : user existant bien sur
                     connect: { id: Number(input.userId) }
                 },
                 skills: {
+                    // prisma va lier le cv a skills en remplissant la table intermediaire CvSkills
                     connect: input.skillIds.map(id => ({ id: Number(id) }))
                 }
             },
+            //on veut pouvoir retourner les relation aussi
             include: {
                 user: true,
                 skills: true
@@ -50,7 +50,7 @@ export const Mutation = {
     },
 
     updateCv: async (_, { id, input }, {  }) => {
-
+        // on verifie que le cv existe en bd
         const existingCv = await prisma.cv.findUnique({
             where: { id: Number(id) }
         });
@@ -60,25 +60,21 @@ export const Mutation = {
         }
 
         if (input.userId) {
-            const user = await prisma.user.findUnique({
-                where: { id: Number(input.userId) }
-            });
-
-            if (!user) {
-                throw new GraphQLError("user inexistant !");
-            }
+            await validateExistPrisma(
+                prisma.user,
+                "id",
+                Number(input.userId),
+                "user inexistant !"
+            );
         }
 
         if (input.skillIds) {
-            const skills = await prisma.skill.findMany({
-                where: {
-                    id: { in: input.skillIds.map(id => Number(id)) }
-                }
-            });
-
-            if (skills.length !== input.skillIds.length) {
-                throw new GraphQLError("skills invalides !");
-            }
+            await validateExistPrisma(
+                prisma.skill,
+                "id",
+                input.skillIds.map(id => Number(id)),
+                "skills invalides !"
+            );
         }
 
         const updatedCv = await prisma.cv.update({
@@ -87,6 +83,7 @@ export const Mutation = {
                 name: input.name,
                 age: input.age,
                 job: input.job,
+                //si on met a jour l user on va executer ce bloc sinon rien
                 ...(input.userId && {
                     user: {
                         connect: { id: Number(input.userId) }
@@ -94,6 +91,7 @@ export const Mutation = {
                 }),
                 ...(input.skillIds && {
                     skills: {
+                        //avec set on va pouvoir supprimer les anciens skills et mettre les nouveaux
                         set: input.skillIds.map(id => ({ id: Number(id) }))
                     }
                 })
@@ -138,3 +136,28 @@ export const Mutation = {
         return existingCv;
     }
 };
+async function validateExistPrisma(model, field, values, errorMessage) {
+
+    if (!Array.isArray(values)) {
+        const record = await model.findUnique({
+            where: { [field]: values }
+        });
+
+        if (!record) {
+            throw new GraphQLError(errorMessage);
+        }
+    }
+
+    else {
+        // on va compter le nombre de skills dans la bd qui sont dans le tabelau values
+        const count = await model.count({
+            where: {
+                [field]: { in: values }
+            }
+        });
+
+        if (count !== values.length) {
+            throw new GraphQLError(errorMessage);
+        }
+    }
+}
