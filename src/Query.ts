@@ -1,60 +1,10 @@
 import { GraphQLError } from "graphql";
-/* ICI LE CODE EST DUPLIQUEE !!
-export const Query = {
 
-    users: (parent, args, { db }, info) => db.users,
-
-    user: (parent, { id }, { db }, info) => {
-        const user = db.users.find((user) => user.id === id);
-
-        if (!user) {
-            throw new GraphQLError(`User with id '${id}' not found.`, {
-                extensions: {
-                    http: { status: 404 },
-                },
-            });
-        }
-
-        return user;
-    },
-
-    cvs: (parent, args, { db }, info) => db.cvs,
-
-    cv: (parent, { id }, { db }, info) => {
-        const cv = db.cvs.find((c) => c.id === id);
-
-        if (!cv) {
-            throw new GraphQLError(`CV with id '${id}' not found.`, {
-                extensions: {
-                    http: { status: 404 },
-                },
-            });
-        }
-
-        return cv;
-    },
-
-    skills: (parent, args, { db }, info) => db.skills,
-
-    skill: (parent, { id }, { db }, info) => {
-        const skill = db.skills.find((s) => s.id === id);
-
-        if (!skill) {
-            throw new GraphQLError(`Skill with id '${id}' not found.`, {
-                extensions: {
-                    http: { status: 404 },
-                },
-            });
-        }
-
-        return skill;
-    }
-};
-
- */
-
-const findByIdOrThrow = (array, id, entityName) => {
-    const item = array.find((el) => el.id === id);
+const findByIdOrThrow = async (model, id, entityName, include = {}) => {
+    const item = await model.findUnique({
+        where: { id: Number(id) },
+        include
+    });
 
     if (!item) {
         throw new GraphQLError(`${entityName} with id '${id}' not found.`, {
@@ -69,18 +19,49 @@ const findByIdOrThrow = (array, id, entityName) => {
 
 export const Query = {
 
-    users: (parent, args, { db }, info) => db.users,
+    users: async (_, __, { prisma }) =>
+        prisma.user.findMany({
+            include: {
+                cvs: {
+                    include: {
+                        skills: true
+                    }
+                }
+            }
+        }),
 
-    user: (parent, { id }, { db }, info) =>
-        findByIdOrThrow(db.users, id, "User"),
+    user: async (_, { id }, { prisma }) =>
+        findByIdOrThrow(prisma.user, id, "User", {
+            cvs: {
+                include: {
+                    skills: true
+                }
+            }
+        }),
 
-    cvs: (parent, args, { db }, info) => db.cvs,
+    cvs: async (_, __, { prisma }) =>
+        prisma.cv.findMany({
+            include: {
+                user: true,
+                skills: true
+            }
+        }),
 
-    cv: (parent, { id }, { db }, info) =>
-        findByIdOrThrow(db.cvs, id, "Cv"),
+    cv: async (_, { id }, { prisma }) =>
+        findByIdOrThrow(prisma.cv, id, "Cv", {
+            user: true,
+            skills: true
+        }),
 
-    skills: (parent, args, { db }, info) => db.skills,
+    skills: async (_, __, { prisma }) =>
+        prisma.skill.findMany({
+            include: {
+                cvs: true
+            }
+        }),
 
-    skill: (parent, { id }, { db }, info) =>
-        findByIdOrThrow(db.skills, id, "Skill"),
+    skill: async (_, { id }, { prisma }) =>
+        findByIdOrThrow(prisma.skill, id, "Skill", {
+            cvs: true
+        }),
 };

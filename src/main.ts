@@ -2,14 +2,13 @@ import { createServer } from "node:http";
 import {createPubSub, createYoga, renderGraphiQL} from "graphql-yoga";
 import { createSchema } from "graphql-yoga";
 import {Query} from "./Query";
-import { DB } from "./db/db";
-import {Cv} from "./Cv";
-import {User} from "./User";
-import {Skill} from "./Skill";
 import {Mutation} from "./Mutation";
 import {Subscription} from "./Subscription";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 const fs = require("fs");
 const path = require("path");
+
 export const pubSub = createPubSub();
 export const schema = createSchema({
     typeDefs: fs.readFileSync(
@@ -18,16 +17,14 @@ export const schema = createSchema({
     ),
     resolvers: {
         Query,
-        Cv,
-        User,
-        Skill,
+
         Mutation,
         Subscription,
 
     },
 });
 
-const yoga = createYoga({ schema, context: { db: DB }, renderGraphiQL });
+const yoga = createYoga({ schema, context: { prisma }, renderGraphiQL });
 const server = createServer(yoga);
 server.listen(4000, () => {
     console.info(`

@@ -2,8 +2,9 @@ import {pubSub} from "./main";
 
 export const Subscription = {
     cv: {
-        subscribe: (parent, args, { db }) =>
+        subscribe: (_, __, { }) =>
             pubSub.subscribe("cv"),
+
         resolve: (payload) => payload,
     }
 };

@@ -1,100 +1,140 @@
 import { GraphQLError } from "graphql";
-import { pubSub } from "./main";
+import {pubSub} from "./main";
+
 export const Mutation = {
-    //ici on destructure input pour acceder directement a ses elements => on evite args.input
-    addCv: (parent, { input }, { db }, info) => {
 
-        // on verifie que l user associee a ce cv existe vraiment
-        validateExist(db.users, "id", input.userId, "user inexistant !");
+    addCv: async (_, { input }, { prisma }) => {
 
-        // tous les skills du cv existent dans la bd
-        validateExist(db.skills, "id", input.skillIds, "skills invalides!");
+        const user = await prisma.user.findUnique({
+            where: { id: Number(input.userId) }
+        });
 
-        const cvsLength = db.cvs.length;
-        let newId;
-
-        //le premier cv a inserer
-        if (!cvsLength) {
-            newId = 1;
-        } else {
-            // index commence a partir de 0 => donc on fait length-1 pour avoir le dernier
-            newId = db.cvs[cvsLength - 1].id + 1;
+        if (!user) {
+            throw new GraphQLError("user inexistant !");
         }
 
-        //ici on evite de modifier l argument input directement
-        const newCv = {
-            id: newId,
-            ...input
-        };
-        db.cvs.push(newCv);
+        const skills = await prisma.skill.findMany({
+            where: {
+                id: { in: input.skillIds.map(id => Number(id)) }
+            }
+        });
 
-        // on publie l evenement dans le canal et le payload ici = cv
-        pubSub.publish("cv", { cv: newCv, mutation:"ADD" });
+        if (skills.length !== input.skillIds.length) {
+            throw new GraphQLError("skills invalides !");
+        }
+
+        const newCv = await prisma.cv.create({
+            data: {
+                name: input.name,
+                age: input.age,
+                job: input.job,
+                user: {
+                    connect: { id: Number(input.userId) }
+                },
+                skills: {
+                    connect: input.skillIds.map(id => ({ id: Number(id) }))
+                }
+            },
+            include: {
+                user: true,
+                skills: true
+            }
+        });
+
+        pubSub.publish("cv", {
+            cv: newCv,
+            mutation: "ADD"
+        });
+
         return newCv;
     },
 
-    updateCv: (parent, { id, input }, { db }, info) => {
+    updateCv: async (_, { id, input }, { prisma }) => {
 
-        const cv = db.cvs.find(c => c.id === id);
-        if (!cv) {
-            throw new GraphQLError(`cv avec id : '${id}' inexistant`);
+        const existingCv = await prisma.cv.findUnique({
+            where: { id: Number(id) }
+        });
+
+        if (!existingCv) {
+            throw new GraphQLError(`cv avec id '${id}' inexistant`);
         }
 
-        // l user fourni dans le cv doit etre existant dans la bd
         if (input.userId) {
-            validateExist(db.users, "id", input.userId, `user avec id : '${input.userId}' inexistant !`);
+            const user = await prisma.user.findUnique({
+                where: { id: Number(input.userId) }
+            });
+
+            if (!user) {
+                throw new GraphQLError("user inexistant !");
+            }
         }
 
-        // les skills fournis dans le cv dovent figurer dans la liste
         if (input.skillIds) {
-            validateExist(db.skills, "id", input.skillIds, "un ou plusieurs skills inexistants !");
+            const skills = await prisma.skill.findMany({
+                where: {
+                    id: { in: input.skillIds.map(id => Number(id)) }
+                }
+            });
+
+            if (skills.length !== input.skillIds.length) {
+                throw new GraphQLError("skills invalides !");
+            }
         }
 
-        // on met a jour le cv
-        for (let key in input) {
-            cv[key] = input[key];
-        }
+        const updatedCv = await prisma.cv.update({
+            where: { id: Number(id) },
+            data: {
+                name: input.name,
+                age: input.age,
+                job: input.job,
+                ...(input.userId && {
+                    user: {
+                        connect: { id: Number(input.userId) }
+                    }
+                }),
+                ...(input.skillIds && {
+                    skills: {
+                        set: input.skillIds.map(id => ({ id: Number(id) }))
+                    }
+                })
+            },
+            include: {
+                user: true,
+                skills: true
+            }
+        });
 
-        pubSub.publish("cv", {  cv, mutation:"UPDATE" });
+        pubSub.publish("cv", {
+            cv: updatedCv,
+            mutation: "UPDATE"
+        });
 
-        return cv;
+        return updatedCv;
     },
 
-    deleteCv: (parent, { id }, { db }, info) => {
+    deleteCv: async (_, { id }, { prisma }) => {
 
-        // on a besoin de l index car la fonction splice prend un index
-        const index = db.cvs.findIndex(c => c.id === id);
-        if (index === -1) {
+        const existingCv = await prisma.cv.findUnique({
+            where: { id: Number(id) },
+            include: {
+                user: true,
+                skills: true
+            }
+        });
+
+        if (!existingCv) {
             throw new GraphQLError(`CV with id '${id}' not found`);
         }
-        const deletedCv = db.cvs[index];
 
-        // on veut supprimer un elt a partir de la position index
-        db.cvs.splice(index, 1);
+        await prisma.cv.delete({
+            where: { id: Number(id) }
+        });
 
-        pubSub.publish("cv", { cv: deletedCv, mutation:"DELETE"});
-        return deletedCv;
+        pubSub.publish("cv", {
+            cv: existingCv,
+            mutation: "DELETE"
+        });
+
+        return existingCv;
     }
 };
-
-
-function validateExist(array, attribut, values, errorMessage) {
-
-    const check = (value) =>
-        array.some(element => element[attribut] === value);
-    // ici on veut verifier un element simple exmple l existance d un user
-    if (!Array.isArray(values)) {
-        if (!check(values)) {
-            throw new GraphQLError(errorMessage);
-        }
-    }
-
-    // ici on veut verifier l existance de plusieurs elements exmple skills
-    else {
-        const allExist = values.every(value => check(value));
-
-        if (!allExist) {
-            throw new GraphQLError(errorMessage);
-        }
-    }
-}
