@@ -1,8 +1,10 @@
 import { createPubSub } from "graphql-yoga";
-import { Cv } from "./entities/cv.entity";
+import { Cv, User, Skill } from "@prisma/client";
 
 export type CvMutationType = "ADDED" | "UPDATED" | "DELETED";
 
+export type CvWithRelations = Cv & { user: User; skills: Skill[] };
+
 export const pubSub = createPubSub<{
-    CV_CHANGED: [{ mutationType: CvMutationType; cv: Cv }];
+    CV_CHANGED: [{ mutationType: CvMutationType; cv: CvWithRelations }];
 }>();

@@ -25,11 +25,11 @@ export const schema = createSchema({
 });
 
 async function main() {
-    await prisma.$connect();
-    console.log("Database connected");
+    console.log("Starting server...");
 
     const yoga = createYoga({ schema, renderGraphiQL });
     const server = createServer(yoga);
+
     server.listen(4000, () => {
         console.info("Server is running on http://localhost:4000/graphql");
     });
